@@ -115,7 +115,7 @@ export async function signin({
 // ✅ Get current user session
 export async function getCurrentUser() {
   try {
-    // Get current session from cookie
+    // Get the current user from Supabase auth (based on cookie/session)
     const {
       data: { user },
       error,
@@ -127,28 +127,34 @@ export async function getCurrentUser() {
     }
 
     if (!user) {
-      return { success: false, error: "No user found" };
+      return { success: false, error: "No authenticated user found" };
     }
 
-    // Get user profile
+    // Fetch user's extended profile from 'users' table
     const { data: profileData, error: profileError } = await supabase
       .from("users")
       .select("*")
-      .eq("id", user.id)
+      .eq("id", user.id) // assumes 'id' in 'users' matches auth user id
       .single();
 
     if (profileError) {
-      console.error("Profile fetch error:", profileError);
+      console.warn("User found, but profile fetch failed:", profileError);
       return {
         success: true,
         data: user,
-        warning: "User found but profile couldn't be loaded",
+        warning: "User authenticated but profile not found",
       };
     }
 
-    return { success: true, data: { ...user, profile: profileData } };
-  } catch (error: any) {
-    console.error("Unexpected getCurrentUser error:", error);
+    return {
+      success: true,
+      data: {
+        ...user,
+        profile: profileData,
+      },
+    };
+  } catch (err: any) {
+    console.error("Unexpected getCurrentUser error:", err);
     return { success: false, error: "An unexpected error occurred" };
   }
 }
