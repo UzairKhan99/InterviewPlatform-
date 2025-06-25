@@ -12,6 +12,7 @@ const InterviewCard = ({
   type,
   techstack,
   createdAt,
+  id,
 }: any) => {
   const feedback = null as any;
   // Normalize interview type to show "Mixed" if it contains "mix" case-insensitive
@@ -20,6 +21,9 @@ const InterviewCard = ({
   const formattedDate = dayjs(
     feedback?.createdAt || createdAt || Date.now()
   ).format("MMM D, YYYY");
+
+  // Use id or interviewId for routing
+  const interviewRouteId = id || interviewId;
 
   return (
     <div className="relative flex flex-col border border-primary-100/20 p-6 rounded-xl w-[350px] h-[400px] shadow-lg hover:shadow-xl transition-all duration-300 bg-black/80 backdrop-blur-sm m-4 cursor-pointer hover:shadow-primary-100/50 hover:border-primary-100/40">
@@ -66,23 +70,19 @@ const InterviewCard = ({
 
       {/* Action button */}
       <div className="flex justify-center mt-6">
-        <Link
-          href={`${
-            feedback
-              ? `/interview/${interviewId}/feedback`
-              : `/interview/${interviewId}`
-          }`}
-        >
-          {feedback ? (
+        {feedback ? (
+          <Link href={`/interview/${interviewRouteId}/feedback`}>
             <Button className="w-full bg-gradient-to-r from-primary-100 to-primary-200 hover:opacity-90 text-black font-medium px-6 py-5 text-lg rounded-xl transition-all duration-300 shadow-lg hover:shadow-primary-100/25 hover:scale-[1.02]">
               View Feedback
             </Button>
-          ) : (
+          </Link>
+        ) : (
+          <Link href={`/ViewInterview/${interviewRouteId}`}>
             <Button className="w-full bg-gradient-to-r from-primary-100 to-primary-200 hover:opacity-90 text-black font-medium px-6 py-5 text-lg rounded-xl transition-all duration-300 shadow-lg hover:shadow-primary-100/25 hover:scale-[1.02]">
               View Interview
             </Button>
-          )}
-        </Link>
+          </Link>
+        )}
       </div>
     </div>
   );

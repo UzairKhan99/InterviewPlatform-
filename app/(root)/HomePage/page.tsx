@@ -2,23 +2,54 @@ import { Button } from "@/Components/ui/button";
 import Link from "next/link";
 import React from "react";
 import Image from "next/image";
-import { dummyInterviews } from "@/constants";
 import InterviewCard from "@/Components/InterviewCard";
-import {
-  getCurrentUser,
-  getInterviewByUserId,
-  getLatestInterview,
-} from "@/lib/actions/auth.action";
+import { getAllInterviews } from "@/lib/actions/auth.action";
+
+const mockInterviews = [
+  {
+    id: 1,
+    userid: "system",
+    type: "Frontend",
+    role: "Frontend Developer",
+    level: "Intermediate",
+    questions: [
+      "Explain how React's virtual DOM works",
+      "What are React hooks?",
+      "Describe CSS positioning",
+    ],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    userid: "system",
+    type: "System Design",
+    role: "System Design Engineer",
+    level: "Advanced",
+    questions: [
+      "Design a URL shortening service",
+      "Design Instagram",
+      "Design a chat application",
+    ],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 3,
+    userid: "system",
+    type: "Behavioral",
+    role: "Behavioral Interview",
+    level: "Beginner",
+    questions: [
+      "Tell me about yourself",
+      "Why do you want to work here?",
+      "Describe a challenging situation",
+    ],
+    createdAt: new Date().toISOString(),
+  },
+];
 
 const HomePage = async () => {
-  const user = await getCurrentUser();
-  const [userInterviews, latestInterview] = await Promise.all([
-    getInterviewByUserId(user?.data?.id!),
-    getLatestInterview(user?.data?.id!, 1),
-  ]);
-
-  const hasPastInterviews = userInterviews && userInterviews.length > 0;
-  const hasUpcomingInterview = latestInterview && latestInterview.length > 0;
+  const interviews = await getAllInterviews();
+  const hasInterviews = interviews && interviews.length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-primary-900/10">
@@ -51,38 +82,34 @@ const HomePage = async () => {
             asChild
             className="w-full md:w-auto self-start bg-gradient-to-r from-primary-100 to-primary-200 hover:opacity-90 text-black font-medium px-8 py-6 text-lg rounded-xl transition-all duration-300 shadow-lg hover:shadow-primary-100/25"
           >
-            <Link href="/sign-up">Start Interview</Link>
+            <Link href="/Interview">Start Interview</Link>
           </Button>
         </div>
       </section>
 
-      {/* Past Interviews Section */}
-      <section className="flex flex-col gap-2">
-        <h2>Your Interviews</h2>
-        <div className="interview-section flex flex-row gap-2">
-          {hasPastInterviews ? (
-            userInterviews?.map((interview: any) => (
+      {/* Your Interviews Section */}
+      <section className="container mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold text-white mb-6">Your Interviews</h2>
+        <div className="flex flex-wrap gap-4 justify-center">
+          {hasInterviews ? (
+            interviews.map((interview: any) => (
               <InterviewCard {...interview} key={interview.id} />
             ))
           ) : (
-            <p className="text-primary-100/80">You have no interviews yet</p>
+            <p className="text-primary-100/80">No interviews found.</p>
           )}
         </div>
       </section>
 
       {/* Available Interviews Section */}
-      <section className="interview-section">
-        <h2>Take an Interview</h2>
-        <div className="interview-section flex flex-row gap-2">
-          {hasUpcomingInterview ? (
-            latestInterview?.map((interview: any) => (
-              <InterviewCard {...interview} key={interview.id} />
-            ))
-          ) : (
-            <p className="text-primary-100/80">
-              There are no new Interviews Available{" "}
-            </p>
-          )}
+      <section className="container mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold text-white mb-6">
+          Available Interviews
+        </h2>
+        <div className="flex flex-wrap gap-4 justify-center">
+          {mockInterviews.map((interview) => (
+            <InterviewCard {...interview} key={interview.id} />
+          ))}
         </div>
       </section>
     </div>

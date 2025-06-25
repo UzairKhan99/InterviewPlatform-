@@ -241,3 +241,18 @@ export async function getLatestInterview(
     return null;
   }
 }
+
+// Get all interviews (matches your current schema)
+export async function getAllInterviews(): Promise<Interview[] | null> {
+  try {
+    const { data, error } = await supabase.from("interviews").select("*");
+    if (error) {
+      console.error("Error fetching interviews:", error);
+      return null;
+    }
+    return data;
+  } catch (error) {
+    console.error("Error fetching interviews:", error);
+    return null;
+  }
+}
