@@ -35,7 +35,18 @@ const mockData: Interview[] = [
   },
   // You can add more interviews here
 ];
-
+// {
+//   "id": 1,
+//   "userid": "system",
+//   "type": "Behavioral",
+//   "title": "Behavioral Interview",
+//   "description": "Practice answering common behavioral questions",
+//   "questions": ["Tell me about yourself", "Why do you want to work here?", "Describe a challenging situation"],
+//   "duration": "30 mins",
+//   "difficulty": "Beginner",
+//   "createdAt": "2025-06-25T12:00:00Z",
+//   "coverImage": "/images/behavioral.jpg"
+// }
 export default function ViewInterview() {
   const [interviews, setInterviews] = useState<Interview[]>([]);
 
