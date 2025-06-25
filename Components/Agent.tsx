@@ -38,6 +38,7 @@ const Agent = ({
   const [messages, setMessages] = useState<SavedMessage[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const onCallStart = () => setCallStatus(CallStatus.ACTIVE);
@@ -78,11 +79,93 @@ const Agent = ({
     }
   }, [messages, callStatus, router]);
 
+  // Clear error when call status changes
+  useEffect(() => {
+    if (callStatus !== CallStatus.INACTIVE) {
+      setError(null);
+    }
+  }, [callStatus]);
+
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
     try {
+      // Check if we're in a browser environment
+      if (typeof window === "undefined") {
+        throw new Error("This feature is only available in the browser");
+      }
+
+      // Check if we're on HTTPS (required for media devices)
+      if (
+        window.location.protocol !== "https:" &&
+        window.location.hostname !== "localhost"
+      ) {
+        throw new Error(
+          "Microphone access requires HTTPS. Please use a secure connection."
+        );
+      }
+
+      // Check if navigator.mediaDevices is available
+      if (!navigator.mediaDevices) {
+        // Check if it's an older browser that uses the deprecated API
+        if (
+          (navigator as any).getUserMedia ||
+          (navigator as any).webkitGetUserMedia ||
+          (navigator as any).mozGetUserMedia ||
+          (navigator as any).msGetUserMedia
+        ) {
+          throw new Error(
+            "Your browser uses an older version of the Media API. Please update your browser or use a modern browser like Chrome, Firefox, or Safari."
+          );
+        }
+        throw new Error(
+          "Media devices are not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari."
+        );
+      }
+
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices.getUserMedia) {
+        throw new Error(
+          "Microphone access is not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari."
+        );
+      }
+
+      // Request microphone permission first
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (permissionError: any) {
+        if (permissionError.name === "NotAllowedError") {
+          throw new Error(
+            "Microphone permission denied. Please allow microphone access in your browser settings and try again."
+          );
+        } else if (permissionError.name === "NotFoundError") {
+          throw new Error(
+            "No microphone found. Please connect a microphone and try again."
+          );
+        } else if (permissionError.name === "NotReadableError") {
+          throw new Error(
+            "Microphone is already in use by another application. Please close other applications using the microphone and try again."
+          );
+        } else {
+          throw new Error(
+            `Microphone access failed: ${permissionError.message}`
+          );
+        }
+      }
+
+      // Check if VAPI token is available
+      if (!process.env.NEXT_PUBLIC_VAPI_WEB_TOKEN) {
+        throw new Error(
+          "VAPI configuration is missing. Please check your environment variables."
+        );
+      }
+
       if (type === "generate") {
-        await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+        if (!process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID) {
+          throw new Error(
+            "VAPI workflow ID is missing. Please check your environment variables."
+          );
+        }
+        await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID, {
           variableValues: { username: userName, userid: userId },
         });
       } else {
@@ -96,12 +179,19 @@ const Agent = ({
     } catch (err) {
       console.error("Call failed:", err);
       setCallStatus(CallStatus.INACTIVE);
+      // Show user-friendly error message
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to start call. Please try again."
+      );
     }
   };
 
   const handleDisconnect = () => {
     vapi.stop();
     setCallStatus(CallStatus.FINISHED);
+    router.push("/HomePage");
   };
 
   return (
@@ -134,6 +224,33 @@ const Agent = ({
             {callStatus === CallStatus.FINISHED && "Call ended"}
           </span>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <svg
+                className="w-5 h-5 text-red-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-red-400 font-medium">Error</span>
+            </div>
+            <p className="text-red-300 text-sm mt-1">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-400 hover:text-red-300 text-xs mt-2 underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Call Buttons */}
         <div className="flex gap-4">

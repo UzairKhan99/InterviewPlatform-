@@ -17,10 +17,10 @@ if (!supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    persistSession: false,
+    persistSession: true,
     storageKey: "fastprep-auth",
-    autoRefreshToken: false,
-    detectSessionInUrl: false,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
   },
 });
 

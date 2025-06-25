@@ -1,15 +1,16 @@
 import Agent from "@/Components/Agent";
 import React from "react";
-import { getCurrentUser } from "@/lib/actions/auth.action";
+import { getCurrentUserServer } from "@/lib/actions/auth.action";
+
 const InterviewPage = async () => {
-  const user = await getCurrentUser();
+  const user = await getCurrentUserServer();
 
   return (
     <div>
       Interview Generation
       <Agent
-        userName={(user as any)?.name}
-        userId={(user as any)?.id}
+        userName={user?.profile?.name || user?.email || "User"}
+        userId={user?.id || ""}
         type="generated"
       />
     </div>
