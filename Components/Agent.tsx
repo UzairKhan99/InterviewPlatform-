@@ -75,7 +75,7 @@ const Agent = ({
       setLastMessage(messages[messages.length - 1].content);
     }
     if (callStatus === CallStatus.FINISHED) {
-      router.push("/");
+      router.push("/HomePage");
     }
   }, [messages, callStatus, router]);
 

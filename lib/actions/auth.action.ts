@@ -145,7 +145,6 @@ export async function getCurrentUser() {
     return { success: false, error: "An unexpected error occurred" };
   }
 }
-
 // ✅ Get current user session (Server-side version)
 export async function getCurrentUserServer() {
   try {
@@ -182,6 +181,63 @@ export async function getCurrentUserServer() {
     };
   } catch (err: any) {
     // Return null instead of throwing error for server components
+    return null;
+  }
+}
+// Get interviews for a specific user
+export async function getInterviewByUserId(
+  userId: string
+): Promise<Interview[] | null> {
+  try {
+    // Check if userId is valid
+    if (!userId || userId === "undefined") {
+      console.error("Invalid userId:", userId);
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from("interviews")
+      .select("*")
+      .eq("userid", userId);
+
+    if (error) {
+      console.error("Error fetching interviews:", error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching interviews:", error);
+    return null;
+  }
+}
+
+export async function getLatestInterview(
+  userId: string,
+  limit: number
+): Promise<Interview[] | null> {
+  try {
+    // Check if userId is valid
+    if (!userId || userId === "undefined") {
+      console.error("Invalid userId:", userId);
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from("interviews")
+      .select("*")
+      .eq("finalized", true)
+      .order("createdAt", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("Error fetching latest interview:", error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching latest interview:", error);
     return null;
   }
 }
