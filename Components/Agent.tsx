@@ -24,6 +24,11 @@ interface AgentProps {
   interviewId?: string;
   type: string;
   questions?: string[];
+  // Interview data props
+  role?: string;
+  level?: string;
+  amount?: string;
+  techstack?: string[];
 }
 
 const Agent = ({
@@ -32,6 +37,10 @@ const Agent = ({
   interviewId,
   type,
   questions,
+  role,
+  level,
+  amount,
+  techstack,
 }: AgentProps) => {
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
@@ -40,9 +49,48 @@ const Agent = ({
   const [lastMessage, setLastMessage] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
+  // Function to save interview data after call ends
+  const saveInterviewToDatabase = async () => {
+    if (!role || !type || !level || !userId) {
+      console.log("Missing interview data, skipping save");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/save-interview", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          role,
+          type: type,
+          level,
+          amount,
+          userId,
+          techstack,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log("Interview data saved successfully:", result.data);
+      } else {
+        console.error("Failed to save interview data:", result.error);
+      }
+    } catch (error) {
+      console.error("Error saving interview data:", error);
+    }
+  };
+
   useEffect(() => {
     const onCallStart = () => setCallStatus(CallStatus.ACTIVE);
-    const onCallEnd = () => setCallStatus(CallStatus.FINISHED);
+    const onCallEnd = async () => {
+      setCallStatus(CallStatus.FINISHED);
+      // Save interview data when call ends
+      await saveInterviewToDatabase();
+    };
     const onMessage = (message: any) => {
       if (message.type === "transcript" && message.transcriptType === "final") {
         const newMessage = { role: message.role, content: message.transcript };
@@ -68,14 +116,17 @@ const Agent = ({
       vapi.off("speech-end", onSpeechEnd);
       vapi.off("error", onError);
     };
-  }, []);
+  }, [role, type, level, amount, userId, techstack]); // Add dependencies
 
   useEffect(() => {
     if (messages.length > 0) {
       setLastMessage(messages[messages.length - 1].content);
     }
     if (callStatus === CallStatus.FINISHED) {
-      router.push("/HomePage");
+      // Add a small delay before redirecting to ensure data is saved
+      setTimeout(() => {
+        router.push("/HomePage");
+      }, 2000);
     }
   }, [messages, callStatus, router]);
 

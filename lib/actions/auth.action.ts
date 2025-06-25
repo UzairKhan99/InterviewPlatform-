@@ -256,3 +256,47 @@ export async function getAllInterviews(): Promise<Interview[] | null> {
     return null;
   }
 }
+
+// Save interview data to Supabase after VAPI interview
+export async function saveInterviewData({
+  role,
+  type,
+  level,
+  amount,
+  userId,
+  techstack,
+}: {
+  role: string;
+  type: string;
+  level: string;
+  amount?: string;
+  userId: string;
+  techstack?: string[];
+}) {
+  try {
+    const { data, error } = await supabase
+      .from("interviews")
+      .insert({
+        role,
+        type,
+        level,
+        userid: userId,
+        techstack: techstack || [],
+        questions: [], // You can add questions if needed
+        createdAt: new Date().toISOString(),
+        finalized: true,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error saving interview data:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error saving interview data:", error);
+    return { success: false, error: "Failed to save interview data" };
+  }
+}
